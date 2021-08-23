@@ -1,40 +1,464 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/dist/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/dist/favicon-16x16.png"
+    />
 
-		<title>reveal.js</title>
+    <title>Let's Orange - ALPR</title>
 
-		<link rel="stylesheet" href="dist/reset.css">
-		<link rel="stylesheet" href="dist/reveal.css">
-		<link rel="stylesheet" href="dist/theme/black.css">
+    <link rel="stylesheet" href="dist/reset.css" />
+    <link rel="stylesheet" href="dist/reveal.css" />
+    <link rel="stylesheet" href="dist/theme/night.css" />
 
-		<!-- Theme used for syntax highlighted code -->
-		<link rel="stylesheet" href="plugin/highlight/monokai.css">
-	</head>
-	<body>
-		<div class="reveal">
-			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
-			</div>
-		</div>
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="plugin/highlight/monokai.css" />
+  </head>
 
-		<script src="dist/reveal.js"></script>
-		<script src="plugin/notes/notes.js"></script>
-		<script src="plugin/markdown/markdown.js"></script>
-		<script src="plugin/highlight/highlight.js"></script>
-		<script>
-			// More info about initialization & config:
-			// - https://revealjs.com/initialization/
-			// - https://revealjs.com/config/
-			Reveal.initialize({
-				hash: true,
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section data-background-color="#FF7A01">
+          <h2 style="color: white; margin-bottom: 5rem">Let's Orange</h2>
+          <h5 style="color: white; opacity: 0.6">
+            Automatic Licence Plate Recognition (ALPR)
+          </h5>
+          <p
+            style="
+              color: white;
+              font-size: 1.5rem;
+              margin-top: 5rem;
+              opacity: 0.5;
+            "
+          >
+            Wykonał: Mikołaj Tkaczyk
+          </p>
+          <aside class="notes">
+            Chciałbym dzisiaj zaprezentować wynik swojej ostatniej pracy w
+            ramach praktyk Let's Orange, mianowicie system rozpoznawania numerów
+            tablic (ALPR), w oparciu o Node-Red oraz Python na urządzeniu
+            Raspberry Pi 3B+.
+          </aside>
+        </section>
+        <section>
+          <h3>Struktura archikektury hosta</h3>
+          <aside class="notes">
+            Omówmy na jakiej archikekturze został uruchomiony projekt.
+          </aside>
+        </section>
+        <section>
+          <section data-transition="fade-in none-out">
+            <img src="dist/diagram_orange_6.jpg" width="800" height="600" />
+            <aside class="notes">
+              Podstawą było urządzenie Raspberry Pi 3B+, posiadające
+              czterordzeniowy procesor w architekturze ARM71 o taktowaniu
+              1,4GHz, pamięć RAM 1 GB oraz GPU w postaci Broadcom Videocore-IV.
+            </aside>
+          </section>
+          <section data-transition="fade-in none-out">
+            <img src="dist/diagram_orange_5.jpg" width="800" height="600" />
+            <aside class="notes">
+              Jako system operacyjny, wybrany został Linux pod postacią
+              dedykowanego Raspbiana Lite, jako że cechuje on się największą
+              stabilnością na Raspberry.
+            </aside>
+          </section>
+          <section data-transition="fade-in none-out">
+            <img src="dist/diagram_orange_4.jpg" width="800" height="600" />
+            <aside class="notes">
+              Z racji tego, że kod oparto o języki JavaScript oraz Python, użyto
+              dwóch środowisk, jedno z pythonem 3.7.3, drugie z node.js w wersji
+              16.5.0.
+            </aside>
+          </section>
+          <section data-transition="fade-in none-out">
+            <img src="dist/diagram_orange_3.jpg" width="800" height="600" />
+            <aside class="notes">
+              Całość dodatków w pythonie instalowano w środowisku wirtualnym
+              Virtualenv, tak aby można było prowadzić testy alternatywnych
+              metod, bez ingerencji w pakiety. Na Node.js postawiono Node-Red,
+              czyli główny mózg wywołujący proces.
+            </aside>
+          </section>
+          <section data-transition="fade-in none-out">
+            <img src="dist/diagram_orange_2.jpg" width="800" height="600" />
+            <aside class="notes">
+              W celach analizy obrazu użyto w przypadku pythona pakietów
+              Tesseract oraz OpenCV, które umożliwia dodatkowo złożoną
+              manipulację obrazem. Dla Node-Red użyto Tensorflow.js, czyli
+              implementacji metod Deep Learning Object Detection.
+            </aside>
+          </section>
+          <section data-transition="fade">
+            <img src="dist/diagram_orange_1.jpg" width="800" height="600" />
+            <aside class="notes">
+              Rozpoznawanie tekstu przebiegało za sprawą wrappera dla Tesseract
+              - gpyocr. Tablice są odnajdywane za pomocą uprzednio nauczonego
+              modelu klasyfikatora kaskadowego. Samochody są rozpoznawane przez
+              model detekcji Coco SSD.
+            </aside>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h3>Założenia i przebieg algorytmu</h3>
+            <p>
+              Rozpoznanie numerów tablic rejestracyjnych ze zdjęcia samochodu
+            </p>
+            <aside class="notes">
+              Omówimy sobie "na sucho", w jaki sposób przebiega algorytm i co
+              uzyskuje w wyniku.
+            </aside>
+          </section>
+          <section>
+            <img src="dist/car.jpg" />
+            <aside class="notes">
+              Wejściem do algorytmu jest obraz zawierający samochód, z którego
+              chcemy odczytać numery tablic. W wersji finalnej, obraz będzie
+              ujednolicony (poziomy oświetlenia, rozdzielczość, położenie
+              samochodu będą takie same niezależnie od zdjęcia)
+            </aside>
+          </section>
+          <section>
+            <h4>
+              Bazując na obrazie wejściowym algorytm przeprowadza detekcję
+              obiektów z modelu CocoSSD
+            </h4>
+            <aside class="notes">
+              Za pomocą metody Single Shot Detection znajdowane są obiekty.
+            </aside>
+          </section>
+          <section>
+            <h4>Wykryte obiekty są filtrowane w poszukiwaniu aut</h4>
+            <aside class="notes">
+              Wszystkie obiekty, które wykrył model są filtrowane, tak aby na
+              wyjściu znajdowały się jedynie samochody.
+            </aside>
+          </section>
+          <section>
+            <h4>
+              Największy pod względem powierzchni bounding box obiekt zostaje
+              przekazany do dalszej części algorytmu
+            </h4>
+            <aside class="notes">
+              Pod uwagę brane jest więc auto znajdujące się najbliżej kamery.
+            </aside>
+          </section>
+          <section>
+            <img src="dist/bbox.png" />
+            <aside class="notes">
+              Obraz jest przekazywany dalej, razem z parametrami bounding boxa.
+            </aside>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h4>
+              Obraz zostaje zapisany na dysku w celu umożliwienia operacji w
+              Pythonie
+            </h4>
+            <aside class="notes">
+              Aby umożliwić jakąś formę przekazywania informacji o obrazie
+              między Node-Red a Pythonem, wybrano node'y file in i file out.
+              Każde znaczące informacje zostają zapisane w plikach na Raspberry.
+            </aside>
+          </section>
+          <section>
+            <h4>Uruchomiony zostaje skrypt Python</h4>
+            <aside class="notes">
+              Skrypt jest wywoływany przez node - exec w Node-Red. Status
+              skryptu jest obserwowany przez node - status, w celu wykrycia
+              błędów.
+            </aside>
+          </section>
+          <section>
+            <h4>
+              Detekcja tablic rejestracyjnych z modelu Haar Cascade Classifier
+            </h4>
+            <aside class="notes">
+              Użyto istniejący, wytrenowany model działający na zasadzie
+              klasyfikacji kaskadowej.
+            </aside>
+          </section>
+          <section>
+            <p>
+              Haar Cascade Classifier - klasyfikator kaskadowy, wykorzystujący
+              iteracyjną klasyfikację klasyfikatorami "słabymi" (edge features,
+              line features, four-rectangle features) korygując predykcję
+              klasyfikatorami "silnymi" otrzymanymi np. z metody AdaBoost
+            </p>
+            <aside class="notes">
+              Klasyfikacja ta polega na iteracyjnym porównywaniu cech obrazu za
+              sprawą klasyfikatorów słabych, odpowiednio dobranych przez metodę
+              AdaBoost.
+            </aside>
+          </section>
+          <section>
+            <p>
+              Klasyfikatory te są uczone tak, aby wskaźnik low false negative
+              (klasyfikacja prawidłowych obiektów jako nieprawidłowe) był jak
+              najwyższy
+            </p>
+            <aside class="notes">
+              Dzieje się tak z tego powodu, że lepiej jest dorzucić błędny
+              obiekt, a następnie sprawdzić go w kolejnych krokach, niż odrzucić
+              prawidłowy obiekt na starcie.
+            </aside>
+          </section>
+          <section>
+            <h4>
+              Wybranie tablicy o najlepszym wyniku detekcji, znajdującej się
+              wewnątrz bounding box samochodu i oznaczenie jej na obrazie
+            </h4>
+            <aside class="notes">
+              Wynik dekecji jest wskaźnikiem tego, jak bardzo znaleziony obiekt
+              pasuje do wytrenowanego modelu. Brany pod uwagę jest tylko obiekt
+              o najwyższym wskaźniku.
+            </aside>
+          </section>
+          <section>
+            <img src="dist/bboxplate.png" />
+            <aside class="notes">
+              Tak wygląda obraz ze znalezioną tablicą.
+            </aside>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h4>Przeprowadzenie modyfikacji obrazu</h4>
+            <aside class="notes">
+              Modyfikacje te polegają głównie na przycinaniu i rozszerzaniu
+              wymiarów, tak aby rozycie Gaussa, bądź operacje morfologiczne nie
+              zniekształcały za mocno napisów.
+            </aside>
+          </section>
+          <section>
+            <img src="dist/cut.png" width="500" />
+            <aside class="notes">
+              Po tych zmianach, obraz wygląda następująco.
+            </aside>
+          </section>
+          <section>
+            <h4>Wykonanie binaryzacji oraz rekonstrukcji morfologicznej</h4>
+            <aside class="notes">
+              Binaryzacja przebiega przy pomocy metody Otsu na obrazie z
+              rozmyciem Gaussa. Rekonstrukcja morfologiczna polega na usunięciu
+              elementów małych, oraz stykających się z ramką obrazu przez
+              operacje erozji z maską.
+            </aside>
+          </section>
+          <section>
+            <img src="dist/recmorph.png" width="500" />
+            <aside class="notes">Po operacjach wynikiem jest taki obraz.</aside>
+          </section>
+          <section>
+            <h4>Wywołanie funkcji z gpyocr w celu rozpoznania tekstu</h4>
+            <aside class="notes">
+              Funkcja ta używa Tesseract w celu rozpoznania tekstu widocznego na
+              obrazie. Funkcja została ustawiona w ten sposób, aby czytać
+              wszystkie litery obrazu jako pojedynczy string.
+            </aside>
+          </section>
+          <section>
+            <h3 style="color: #ff7a01">KS67 AEA</h3>
+            <aside class="notes">
+              W wyniku jest otrzymywany string z zawartością tablicy.
+            </aside>
+          </section>
+          <section>
+            <h4>Zapisanie tekstu w pliku tekstowym</h4>
+            <aside class="notes">
+              Aby przekazać te informacje do Node-Red, posługuje się plikiem
+              tekstowym, który będzie odczytany w dalszej części flow.
+            </aside>
+          </section>
+          <section>
+            <h3>. . .</h3>
+          </section>
+        </section>
+        <section>
+          <h3>Prezentacja w Node-Red</h3>
+          <aside class="notes">
+            Teraz przejdziemy do panelu Node-Red w celu zaprezentowania jak
+            działa algorytm w praktyce, na kilku zdjęciach aut.
+          </aside>
+        </section>
+        <section>
+          <section>
+            <h3>Atuty metody</h3>
+          </section>
+          <section>
+            <h4>Wydajność sprzętowa</h4>
+          </section>
+          <section>
+            <h4>Możliwości implementacji</h4>
+          </section>
+          <section>
+            <h4>Modułowość</h4>
+          </section>
+          <section>
+            <h4>Przekazywanie informacji do innych systemów</h4>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h3>Limitacje</h3>
+          </section>
+          <section>
+            <h4>Wydajność czasowa</h4>
+          </section>
+          <section>
+            <h4>Dostosowanie do pojedynczego scenariusza</h4>
+          </section>
+          <section>
+            <h4>Mnogie debugowanie z powodu low false negative</h4>
+          </section>
+        </section>
+        <section>
+          <h3>Omówienie kodu Python</h3>
+        </section>
+        <section>
+          <pre><code data-trim data-noescape data-line-numbers="1-5|7|9-13|15|17-19|21-24|26|27|28|29-31|32-36|37-40|41|43-45|47|48|49-50|51-55|56|58-60|62|63|64-65|66|68-73|74-75|76-85|88|89-92|93-96|97-99">
+import sys
+import cv2
+import numpy as np
+import gpyocr
+from PIL import Image
+print("--- Starting Computer Vision ---")
+plateCascade = cv2.CascadeClassifier("/home/pi/haarcascade_russian_plate_number.xml")
+color = (255,120,255)
+arg = float(sys.argv[1])
+bbox_x = float(sys.argv[2])
+bbox_y = float(sys.argv[3])
+bbox_w = float(sys.argv[4])
+bbox_h = float(sys.argv[5])
 
-				// Learn about plugins: https://revealjs.com/plugins/
-				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
-			});
-		</script>
-	</body>
+outText = ""
+
+def getText(filename):
+	outText = gpyocr.tesseract_ocr(filename,psm=7,config='tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')[0]
+	return outText
+
+def resize(img):
+	imgCopy = img.copy()
+	resized_img = cv2.resize(imgCopy, (int(imgCopy.shape[1] * 220/100), int(imgCopy.shape[0] * 220/100)), interpolation = cv2.INTER_AREA)
+	return resized_img
+
+def getMorph(img):
+	kernel = np.ones((3, 3), np.uint8)
+	_, morph = cv2.threshold(cv2.GaussianBlur(img,(5,5),0),0,255,cv2.THRESH_BINARY|cv2.THRESH_OTSU)
+	morph = cv2.erode(morph,kernel)
+	morph = cv2.dilate(morph,kernel)
+	morph = cv2.bitwise_not(morph)
+	pad = cv2.copyMakeBorder(morph, 1,1,1,1, cv2.BORDER_CONSTANT, value=255)
+	h, w = pad.shape
+	mask = np.zeros([h+2, w+2], np.uint8)
+	img_flood = cv2.floodFill(pad, mask, (0,0), 0, (5), (0), flags=8)[1]
+	img_flood = img_flood[1:h-1, 1:w-1]
+	morph = cv2.bitwise_not(img_flood)
+	morph = cv2.dilate(morph, kernel)
+	morph = cv2.erode(morph, kernel, iterations=3)
+	morph = cv2.dilate(morph, kernel)
+	return morph
+
+def getBox(img):
+	height, width, _ = img.shape
+	return (bbox_x*width, bbox_y*height, bbox_w*width, bbox_h*height)
+
+def detect(img):
+	errorFlag = 1
+	global outText
+	global bbox_x, bbox_y, bbox_w, bbox_h
+	x = 0
+	y = 0
+	h = 0
+	w = 0
+	max_level = 0
+	bbox_x, bbox_y, bbox_w, bbox_h = getBox(img)
+	print("BBox of car:", bbox_x, bbox_y, bbox_w, bbox_h)
+	temp = img
+	imgGray = cv2.cvtColor(temp, cv2.COLOR_BGR2GRAY)
+	plates = plateCascade.detectMultiScale3(imgGray, arg, outputRejectLevels=True)
+	print(plates)
+	if len(plates[0]) > 0:
+		for i in range(len(plates[0])):
+			(x_temp, y_temp, w_temp, h_temp) = plates[0][i]
+			level_temp = plates[2][i]
+			if x_temp >= bbox_x and y_temp >= bbox_y and (x_temp + w_temp) <= (bbox_x + bbox_w) and (y_temp + h_temp) <= (bbox_y + bbox_h) and level_temp > max_level:
+				print("BBox of plate:", x_temp, y_temp, w_temp, h_temp)
+				max_level = level_temp
+				x = x_temp
+				y = y_temp
+				w = w_temp
+				h = h_temp
+				errorFlag = 0
+	if errorFlag:
+		raise Exception("No plates found!")
+	else:
+		roi_gray = imgGray[y:y+h, x:x+w]
+		roi_color = img[y+2:y+h-2, x+2:x+w-2]
+		cv2.rectangle(temp, (x, y), (x + w, y + h), color, 2)
+		cv2.putText(temp, "Tablica", (x, y - 8), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, color, 2)
+		cv2.imwrite("result.png", roi_color)
+		resized = resize(roi_gray)
+		morph = getMorph(resized)
+		cv2.imwrite("morph.png", morph)
+		outText = getText("/home/pi/morph.png")
+
+
+	cv2.imwrite("bbox.png",temp)
+print("--- Reading Image ---")
+img = cv2.imread("image.png")
+print("--- Detecting Plates ---")
+detect(img)
+if len(outText)==0:
+	print("Numbers not detected!")
+else:
+	print(outText)
+file = open("resultText.txt","w")
+file.write(outText)
+file.close()
+			</code>
+			</pre>
+        </section>
+        <section>
+          <h3>Dziękuję za uwagę</h3>
+          <img src="dist/meme.jpg" width="700" />
+        </section>
+      </div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script>
+      // More info about initialization & config:
+      // - https://revealjs.com/initialization/
+      // - https://revealjs.com/config/
+      Reveal.initialize({
+        width: 1920,
+        height: 1080,
+        center: true,
+        margin: 0.01,
+        hash: true,
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [RevealMarkdown, RevealHighlight, RevealNotes],
+      });
+    </script>
+  </body>
 </html>
