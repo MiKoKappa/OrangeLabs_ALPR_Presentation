@@ -303,15 +303,34 @@
           </section>
           <section>
             <h4>Wydajność sprzętowa</h4>
+            <aside class="notes">
+              Z racji tego, że całość algorytmu jest przeprowadzana na
+              minikomputerze Raspberry Pi o ograniczonej mocy obliczeniowej,
+              widoczna jest wydajność użytych technik wideoanalizy.
+            </aside>
           </section>
           <section>
             <h4>Możliwości implementacji</h4>
+            <aside class="notes">
+              Podobnie jak w przypadku poprzedniego punktu, z powodu działania
+              na procesorze ARM71 w Raspberry Pi, widzimy, że implementacja na
+              architekturach innych niż x86 jest prosta.
+            </aside>
           </section>
           <section>
             <h4>Modułowość</h4>
+            <aside class="notes">
+              Z racji użycia narzędzia Node-Red, całość jest mocno modułowa.
+              Wprowadzanie zmian sprowadza się do zmieniania pojedynczych
+              node'ów.
+            </aside>
           </section>
           <section>
             <h4>Przekazywanie informacji do innych systemów</h4>
+            <aside class="notes">
+              Z powodu integracji narzędzia Node-Red z innymi systemami, np. za
+              pomocą protokołu MQTT, przesyłanie informacji jest bardzo proste.
+            </aside>
           </section>
         </section>
         <section>
@@ -320,12 +339,29 @@
           </section>
           <section>
             <h4>Wydajność czasowa</h4>
+            <aside class="notes">
+              Zależnie od tego jaki jest wymagany maksymalny czas otrzymania
+              wyniku, szybkość algorytmu może być zbyt mała. Wynika to z
+              początkowego użycia zaawansowanej metody Deep Learning oraz
+              operacji na plikach.
+            </aside>
           </section>
           <section>
             <h4>Dostosowanie do pojedynczego scenariusza</h4>
+            <aside class="notes">
+              Algorytm działa najlepiej, kiedy jest przystosowany do pracy w
+              jednym scenariuszu, to znaczy odpowienim kącie, wielkości obrazu,
+              jasności. Zmiana tego scenariusza wymaga przeprowadzenia zmian w
+              kodzie oraz flow.
+            </aside>
           </section>
           <section>
             <h4>Mnogie debugowanie z powodu low false negative</h4>
+            <aside class="notes">
+              Z powodu wysokiego wskaźnika low false negative, liczone do
+              algorytmu mogą być błędnie zidentyfikowane tablice. Aby zmniejszyć
+              impakt tego problemu, należy zastosować filtracje wyników.
+            </aside>
           </section>
         </section>
         <section>
